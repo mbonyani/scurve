@@ -199,7 +199,7 @@ def main():
 
 
     if options.progress:
-        print dst
+        print (dst)
 
     if options.quiet or options.progress:
         prog = progress.Dummy()
