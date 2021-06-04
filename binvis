@@ -2,7 +2,7 @@
 import os.path, math, string, sys
 import scurve
 from scurve import progress, utils, draw
-import Image, ImageDraw
+import PIL.Image, PIL.ImageDraw
 
 
 class _Color:
