@@ -24,7 +24,7 @@ class _Color:
 
 class ColorGradient(_Color):
     def getPoint(self, x):
-        c = ord(self.data[x])/255.0
+        c = self.data[x]/255.0
         return [
             int(255*c),
             int(255*c),
@@ -35,7 +35,7 @@ class ColorGradient(_Color):
 class ColorHilbert(_Color):
     def __init__(self, data, block):
         _Color.__init__(self, data, block)
-        self.csource = scurve.fromSize("hilbert", 3, 256**3)
+        self.csource = fromSize("hilbert", 3, 256**3)
         self.step = len(self.csource)/float(len(self.symbol_map))
 
     def getPoint(self, x):
@@ -45,7 +45,7 @@ class ColorHilbert(_Color):
 
 class ColorClass(_Color):
     def getPoint(self, x):
-        c = ord(self.data[x])
+        c = self.data[x]
         if c == 0:
             return [0, 0, 0]
         elif c == 255:
@@ -74,7 +74,7 @@ class ColorEntropy(_Color):
 
 def drawmap_unrolled(map, size, csource, name, prog):
     prog.set_target((size**2)*4)
-    map = scurve.fromSize(map, 2, size**2)
+    map = fromSize(map, 2, size**2)
     c = Image.new("RGB", (size, size*4))
     cd = ImageDraw.Draw(c)
     step = len(csource)/float(len(map)*4)
@@ -99,7 +99,7 @@ def drawmap_unrolled(map, size, csource, name, prog):
 
 def drawmap_square(map, size, csource, name, prog):
     prog.set_target((size**2))
-    map = scurve.fromSize(map, 2, size**2)
+    map = fromSize(map, 2, size**2)
     c = Image.new("RGB", map.dimensions())
     cd = ImageDraw.Draw(c)
     step = len(csource)/float(len(map))
@@ -111,7 +111,7 @@ def drawmap_square(map, size, csource, name, prog):
     c.save(name)
 
 
-def main():
+def main(d):
     from optparse import OptionParser, OptionGroup
     parser = OptionParser(
                 usage = "%prog [options] infile [output]",
@@ -131,7 +131,7 @@ def main():
     parser.add_option(
         "-m", "--map", action="store",
         type="choice", dest="map", default="hilbert",
-        choices=sorted(scurve.curveMap.keys()),
+        choices=sorted(curveMap.keys()),
         help="Pixel layout map. Can be any supported curve."
     )
     parser.add_option(
@@ -160,23 +160,10 @@ def main():
         dest="quiet", default=False
     )
     options, args = parser.parse_args()
-    if len(args) not in [1, 2]:
-        parser.error("Please specify input and output file.")
 
-    d = file(args[0]).read()
-    if len(args) == 2:
-        dst = args[1]
-    else:
-        base = os.path.basename(args[0])
-        if "." in base:
-            base, _ = base.rsplit(".", 1)
-        dst = base + options.suffix + ".png"
-
-    if os.path.exists(dst) and len(args) < 2:
-        print >> sys.stderr, "Refusing to over-write '%s'. Specify explicitly if you really want to do this."%dst
-        sys.exit(1)
 
     block = None
+    dst = ' ' 
     if options.block:
         parts = options.block.split(":")
         if len(parts) not in [2, 3]:
@@ -212,6 +199,38 @@ def main():
     elif options.type == "square":
         drawmap_square(options.map, options.size, csource, dst, prog)
     prog.clear()
+
+from scurve  import hilbert, zigzag, zorder, natural, graycurve, hcurve
+
+
+curveMap = {
+    "hcurve": hcurve.Hcurve,
+    "hilbert": hilbert.Hilbert,
+    "zigzag": zigzag.ZigZag,
+    "zorder": zorder.ZOrder,
+    "natural": natural.Natural,
+    "gray": graycurve.GrayCurve,
+}
+curves = curveMap.keys()
+
+
+def fromSize(curve, dimension, size):
+    """
+        A convenience function for creating a specified curve by specifying
+        size and dimension. All curves implement this common interface.
+    """
+    return curveMap[curve].fromSize(dimension, size)
+
+
+def fromOrder(curve, dimension, order):
+    """
+        A convenience function for creating a specified curve by specifying
+        order and dimension. All curves implement this common interface, but
+        the meaning of "order" may differ for each curve.
+    """
+    return curveMap[curve](dimension, order)
+
+
 
 
 main()
