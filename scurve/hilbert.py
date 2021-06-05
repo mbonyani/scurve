@@ -1,5 +1,5 @@
 import math
-from scurve import utils
+import utils
 
 def transform(entry, direction, width, x):
     assert x < 2**width
