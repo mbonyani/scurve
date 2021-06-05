@@ -5,6 +5,8 @@
 import math
 
 def graycode(x):
+    # print("XXXX",x)
+    x = int(x)
     return x^(x>>1)
 
 
